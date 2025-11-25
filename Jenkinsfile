@@ -1,46 +1,37 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11'
-            args '-u'
-        }
-    }
+    agent any
 
     stages {
 
         stage('Build') {
             steps {
-                echo 'Instalando dependencias...'
+                echo 'Instalando dependencias en contenedor Docker...'
                 sh '''
-                    if [ -f requirements.txt ]; then
-                        pip install -r requirements.txt
-                    fi
+                    docker run --rm -v "$PWD":/app -w /app python:3.11 \
+                        pip install -r requirements.txt || true
                 '''
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Ejecutando pruebas unitarias con pytest...'
+                echo 'Ejecutando tests dentro de un contenedor Docker...'
                 sh '''
-                    pip install pytest pytest-cov
-                    pytest
+                    docker run --rm -v "$PWD":/app -w /app python:3.11 \
+                        sh -c "pip install pytest pytest-cov && pytest"
                 '''
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Desplegando aplicación en entorno de pruebas...'
-                // Ejemplo:
-                // sh 'docker build -t mi-app:test .'
-                // sh 'docker run -d mi-app:test'
+                echo 'Fase de despliegue (puedes agregar tus comandos)...'
             }
         }
     }
 
     post {
-        success { echo 'Pipeline completada exitosamente.' }
-        failure { echo 'La pipeline falló.' }
+        success { echo "Pipeline completada exitosamente." }
+        failure { echo "La pipeline falló." }
     }
 }
